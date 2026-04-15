@@ -38,14 +38,51 @@
 
 ```
 skills/
-├── auto-data-analysis-claw/       ← 数据分析虾
-├── historical-data-compare-claw/   ← 历史比对虾
-├── financial-report-render-claw/   ← 报告渲染虾
-├── strategy-advisor-claw/          ← 战略参谋虾
-└── powerpoint-pptx/                ← PPT 制作
+├── auto-data-analysis-claw/       ← 数据分析 skill
+├── historical-data-compare-claw/   ← 历史比对 skill
+├── financial-report-render-claw/   ← 报告渲染 skill
+├── strategy-advisor-claw/          ← 战略参谋 skill
+└── powerpoint-pptx/                ← PPT 制作 skill
 ```
 
 复制到：`<你的 workspace>/skills/` 目录下
+
+#### 各 Skill 说明与依赖关系
+
+**`auto-data-analysis-claw` — 数据分析 skill**
+团队的数据处理核心。接收原始数据文件（CSV/Excel），执行数据清洗、KPI 计算、趋势分析、多维分析，输出结构化 JSON 结果。
+- **输入**：原始数据文件路径 + 分析目标
+- **输出**：结构化分析结论（JSON / Markdown）
+- **依赖**：Python 3.8+、`pandas`、`openpyxl`、`matplotlib`、`seaborn`
+- **下游**：结论传给 `historical-data-compare-claw`（需要对比）或 `financial-report-render-claw`（直接出报告）
+
+**`historical-data-compare-claw` — 历史比对 skill**
+专注同比、环比、趋势差异分析。接收两期或多期数据，计算变动幅度、归因差异，支持按区域/品类/渠道等维度拆解。
+- **输入**：多期数据文件 + 对比类型（YoY / MoM / QoQ）+ 分析维度
+- **输出**：差异分析结论（数字 + 归因说明）
+- **依赖**：Python 3.8+、`pandas`、`openpyxl`
+- **上游**：通常在 `auto-data-analysis-claw` 之后调用；**下游**：结论传给 `strategy-advisor-claw` 或 `financial-report-render-claw`
+
+**`financial-report-render-claw` — 报告渲染 skill**
+将分析结论转化为可直接汇报的正式文件。支持输出 HTML 数据看板、PDF、Word、Markdown 等格式，内置深色科技风视觉样式。
+- **输入**：分析结论（JSON / Markdown 文本）+ 报告格式要求
+- **输出**：HTML / PDF / Word 报告文件
+- **依赖**：Python 3.8+、`matplotlib`；PDF 输出额外需要 `wkhtmltopdf`
+- **上游**：接收 `auto-data-analysis-claw` 或 `historical-data-compare-claw` 的输出；可与 `powerpoint-pptx` 并行使用
+
+**`strategy-advisor-claw` — 战略参谋 skill**
+综合数据分析结论，给出可直接执行的行动建议。不做数据处理，只做判断和决策支持。
+- **输入**：关键数据发现 + 业务背景（精简传入，不要带原始数据）
+- **输出**：结构化行动建议（问题诊断 → 优先级 → 具体措施）
+- **依赖**：无额外依赖
+- **上游**：通常是整个分析链路的最后一环，在 `auto-data-analysis-claw` / `historical-data-compare-claw` 之后调用
+
+**`powerpoint-pptx` — PPT 制作 skill**
+创建、编辑、检查 `.pptx` 演示文稿。支持模板、占位符、图表、备注等完整 PPT 功能，确保文件在 PowerPoint 中正常渲染。
+- **输入**：需要呈现的内容 + 格式/模板要求
+- **输出**：`.pptx` 文件
+- **依赖**：Python 3.8+、`python-pptx`
+- **上游**：通常与 `financial-report-render-claw` 并行，作为报告的 PPT 版本输出
 
 ### 第四步：设置用户信息
 
